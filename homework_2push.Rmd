@@ -1,0 +1,64 @@
+---
+title: "Homework_2"
+author: "Balint Parragi"
+date: '2019 10 13 '
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(fig.width = 12)
+knitr::opts_chunk$set(fig.align = 'center')
+```
+
+```{r}
+suppressPackageStartupMessages(library(data.table))
+suppressPackageStartupMessages(library(ggplot2))
+suppressPackageStartupMessages(library(magrittr))
+suppressPackageStartupMessages(library(plotly))
+```
+
+```{r}
+crime_raw <- fread("data/crime.csv")
+```
+
+#### 1. az adattáblában keressétek meg, hogy melyik az 5 leggyakoribb "OFFENSE_CODE_GROUP", csak azokra a sorokra leszűrve, ahol a "SHOOTING" értéke "Y".
+
+```{r}
+crime_shooting <-crime_raw[SHOOTING == "Y"]
+```
+
+```{r}
+crimes_top5freq <- names(sort(table(crime_shooting$OFFENSE_CODE_GROUP), decreasing=TRUE)[1:5])
+```
+
+#### 2. az eredeti adattáblát szűrjétek le azokra a sorokra, ahol a "SHOOTING" értéke "Y", ÉS az "OFFENSE_CODE_GROUP" oszlop értéke az 1.-es pontban kiszámolt 5 leggyakoribb valamelyike.
+
+```{r}
+crime_filtered<- crime_shooting[OFFENSE_CODE_GROUP %in% crimes_top5freq]
+```
+
+#### 3. Vizualizáljátok ezen bűnesetek gyakoriságát, órák szerint, és valamilyen módon (szín, facet, stb.) elkülönítve egymástól az 5 "OFFENSE_CODE_GROUP"-ot.
+
+```{r}
+crime_plot <- crime_filtered[, .N, c("HOUR", "OFFENSE_CODE_GROUP")]
+```
+
+```{r}
+ggplot(crime_plot, aes(x = HOUR, y = N)) +
+    geom_col(fill="purple") +
+    facet_wrap(.~OFFENSE_CODE_GROUP, nrow = 3, scales = "free_y") +
+    theme_minimal()+
+    labs(
+        title = "The 5 most common shooting crimes",
+        y = "Number of reported crimes",
+        x = "Hour"
+    ) +theme(
+        plot.title = element_text(color="purple", hjust=0.5),
+        panel.grid.minor = element_blank(),
+        text = element_text(size = 14)
+    )
+```
+
+
+#### Adatokkal kapcsolatos észrevételem: a fő, hogy mindegyik súlyos bűncselekmény átlagosna késő délután vagy éjszaka történt (15 órától hajnal 1-ig). Hajnalban és munkaidőben jellemzően alig volt.
